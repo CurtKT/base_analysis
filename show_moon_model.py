@@ -13,8 +13,8 @@ import datetime
 import pandas as pd
 
 
-
 class GainBase(object):
+    """月光模型的验证"""
     def __init__(self):
         self.root_path = "/eos/lhaaso/cal/wfcta/LED_Calibrate/new_LED_Calibrate_End2End_File_Factor/"
         self.df = None
@@ -74,7 +74,7 @@ class GainBase(object):
             thd = 0.015
             if dva2_h_base[i-3]<=thd and dva2_h_base[i-2]<=thd and dva2_h_base[i-1]<=thd and dva2_h_base[i]<=thd \
                     and dva2_h_base[i+1]<=thd and dva2_h_base[i+2]<=thd and dva2_h_base[i+3]<=thd:
-                if self.h_base[i] <= 2000:
+                if self.h_base[i] <= 2000 and self.h_base[i]>405:
                     temp_h_base.append(self.h_base[i])
                     temp_gain_rb_time.append(self.gain_rb_time[i])
                     temp_h_gain.append(self.h_gain[i])
@@ -88,16 +88,18 @@ class GainBase(object):
                 # temp_h_base.append(None)
                 # temp_gain_rb_time.append(None)
                 # temp_h_gain.append(None)
-        self.h_base = temp_h_base
-        self.gain_rb_time = temp_gain_rb_time
-        self.h_gain = temp_h_gain
-        if len(self.h_base) < 700:
-            print("Insufficient data")
-            return False
-        temp_array = np.array(self.h_base)
-        if len(temp_array[temp_array>=700]) < 200:
-            print("Insufficient data")
-            return False
+        self.h_base = temp_h_base[100:-100]
+        self.gain_rb_time = temp_gain_rb_time[100:-100]
+        self.h_gain = temp_h_gain[100:-100]
+
+
+        # if len(self.h_base) < 700:
+        #     print("Insufficient data")
+        #     return False
+        # temp_array = np.array(self.h_base)
+        # if len(temp_array[temp_array>=700]) < 200:
+        #     print("Insufficient data")
+        #     return False
         print("len(self.h_base, self.gain_rb_time, self.h_gain)",len(self.h_base), len(self.gain_rb_time), len(self.h_gain))
         for i in self.gain_rb_time:
             parameter_tup = self.get_parameter(i)
@@ -131,9 +133,12 @@ class GainBase(object):
         for file in files:
             file_path = "/eos/lhaaso/decode/wfcta/"+file[-34:-30]+"/"+file[-30:-26]+"/"+file
             print(file_path)
-            df = uproot.open(file_path)["Status"].pandas.df("*", flatten=False)
-            self.tmp_rb_time.extend(list(df["status_readback_Time"]))
-            self.pre_tmp.extend(list(df["PreTemp[0]"]))
+            try:
+                df = uproot.open(file_path)["Status"].pandas.df("*", flatten=False)
+                self.tmp_rb_time.extend(list(df["status_readback_Time"]))
+                self.pre_tmp.extend(list(df["PreTemp[0]"]))
+            except Exception as result:
+                print(result, result.__traceback__.tb_lineno)
         # 时间排序
         for i in range(len(self.tmp_rb_time)):
             for j in range(i + 1, len(self.tmp_rb_time)):
@@ -214,59 +219,15 @@ class GainBase(object):
         p = self.p_dict[tlc][date_index]
         return z, zm, i, p
 
-    def model_func1(self, z, zm, i, p, k, c, cr):
-        xzm = 1 * (1 - 0.9996 * np.sin(zm * np.pi / 180) ** 2) ** -0.5
-        xz = (1 - 0.9996 * np.sin(z * np.pi / 180) ** 2) ** -0.5
+    def model_func1(self, X, k, c, cr, b):
+        z, zm, i, p = X
+        zr = 0.96
+        xzm = 1 * (1 - zr * np.sin(zm * np.pi / 180) ** 2) ** -0.5
+        xz = (1 - zr * np.sin(z * np.pi / 180) ** 2) ** -0.5
         # cr = 10 ** 5.36
         fp = cr * (1.06 + np.cos(p * np.pi / 180) ** 2) + 10 ** (6.15 - p / 40)
-
-        light = -1*c*fp * i * 10 ** (0.4 * k * xzm) * (1 - 10 ** (0.4 * k * xz))
+        light = c*fp * i * 10 ** (-0.4 * k * xzm) * (1 - 10 ** (-0.4 * k * xz)) + b
         return light
-
-    def fuc4model(self, tlc, star_time, end_time, rb_time):
-        self.z = self.tlc_z_dict[tlc]
-        date_index = np.where(abs(self.local_time_all - rb_time) == abs(self.local_time_all - rb_time).min())[0][0]
-        self.zm = self.moon_z[date_index]
-        self.i = self.p_dict[tlc][rb_time]
-        self.p = self.p_dict[tlc][rb_time]
-
-
-
-        if len(star_time) == 12:
-            star = int(time.mktime(time.strptime(star_time, "%Y%m%d%H%M")))
-        else:
-            star = int(time.mktime(time.strptime(star_time, "%Y%m%d%H%M%S")))
-        if len(end_time) == 12:
-            end = int(time.mktime(time.strptime(end_time, "%Y%m%d%H%M")))
-        else:
-            end = int(time.mktime(time.strptime(end_time, "%Y%m%d%H%M%S")))
-        index_star = np.where(abs(self.local_time_all - star) == abs(self.local_time_all - star).min())[0][0]
-        index_end = np.where(abs(self.local_time_all - end) == abs(self.local_time_all - end).min())[0][0]+1
-        self.a = 10  # 月相角度,0为满月，180为新月
-        self.time_span = []
-        for i in self.local_time_all[index_star:index_end]:
-            temp_time_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(i))
-            self.time_span.append(datetime.strptime(temp_time_str, "%Y-%m-%d %H:%M:%S"))
-        # self.am = self.moon_z[index_star:index_end]\
-        self.k = 0.08
-        # self.k = 0.01
-        self.p = self.p_dict[tlc][index_star:index_end]
-        # self.i = 10 ** (-0.4 * (3.84 + 0.026 * abs(self.a) + 4 * 1e-9 * self.a ** 4))
-        self.i = self.phase[index_star:index_end]
-        self.fp = 10 ** 5.36 * (1.06 + np.cos(self.p * np.pi / 180) ** 2) + 10 ** (6.15 - self.p / 40)
-        self.xz = (1 - 0.9996 * np.sin(self.z * np.pi / 180) ** 2) ** -0.5
-        self.xzm = 1*(1 - 0.9996 * np.sin(self.zm * np.pi / 180) ** 2) ** -0.5
-        # self.xz = (1 - np.sin(self.z * np.pi / 180) ** 2) ** -0.5
-        # self.xzm = (1 - np.sin(self.zm * np.pi / 180) ** 2) ** -0.5
-        k2 = 10
-        self.b = -1*self.fp * self.i * k2 ** (0.4 * self.k * self.xzm) * (1 - k2 ** (0.4 * self.k * self.xz))
-        self.raw_b = -1*self.fp * self.i * k2 ** (0.4 * self.k * self.xzm) * (1 - k2 ** (0.4 * self.k * self.xz))
-
-        # self.b = pow(self.b, 1/4)
-
-        self.b = self.b/(50000000)
-        # self.b = pow(self.b, 1/1.5)
-        # self.b = np.log(self.b)/np.log(1e2)
 
 
     def show_graph(self):
@@ -296,13 +257,25 @@ class GainBase(object):
             self.correct_base.append(i/(out_result[1]*i+out_result[0]))
 
         self.correct_base = np.array(self.correct_base)
-        popt2, pcov2 = curve_fit(f=self.model_func1, xdata=(self.z, self.zm, self.i, self.p), ydata=self.correct_base, p0=[0.08, 1, 10 ** 5.36])
+        #  bounds=([0.04,-10, 1e3, -1e6], [0.1, 1000, 1e7,1e6])
+        popt2, pcov2 = curve_fit(f=self.model_func1, xdata=(self.z, self.zm, self.i, self.p), ydata=self.correct_base, p0=[0.06, 1, 10 ** 5.36, 398], maxfev=50000)
+        # popt3, pcov3 = curve_fit(f=self.model_func1, xdata=(self.z, self.zm, self.i, self.p), ydata=self.h_base,
+        #                          p0=[0.08, 1, 10 ** 5.36, 398], maxfev=5000)
         print("popt2", popt2)
-        plt.subplot(211)
-        plt.scatter(range(len(self.h_base)), self.h_base)
-        plt.scatter(range(len(self.correct_base)), self.correct_base)
-        # plt.subplot(212)
-        # plt.scatter(range(len(self.h_base)), self.model_func1(self.z, self.zm, self.i, self.p, popt2[0],popt2[1], popt2[2]))
+        # print("popt3", popt3)
+        plt.subplot(311)
+        # plt.scatter(range(len(self.h_base)), self.h_base, s=1, label="Base")
+        plt.scatter(range(len(self.correct_base)), self.correct_base, s=3, label="CorrectBase")
+        plt.scatter(range(len(self.correct_base)), self.model_func1((self.z, self.zm, self.i, self.p), popt2[0],popt2[1], popt2[2], popt2[3]), s=1, label="MoonLight")
+        plt.legend()
+        plt.subplot(312)
+        plt.scatter(range(len(self.h_base)), self.h_base, s=3, label="Base")
+        # plt.scatter(range(len(self.h_base)), self.model_func1((self.z, self.zm, self.i, self.p), popt3[0],popt3[1], popt3[2], popt3[3]), s=1, label="MoonLight")
+        plt.legend()
+        plt.subplot(313)
+        plt.scatter(range(len(self.h_base)),
+                    -1*self.model_func1((self.z, self.zm, self.i, self.p), 0.08, 1, 10 ** 5.36, 400), s=1, label="MoonLight")
+
         plt.show()
 
 
