@@ -9,7 +9,6 @@ from scipy.optimize import fmin
 import os
 import time
 import sys
-import datetime
 import pandas as pd
 
 
