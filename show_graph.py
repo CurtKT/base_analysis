@@ -1,8 +1,8 @@
 #!/workfs/ybj/ketong/anaconda3/bin/python
 import uproot
-# import matplotlib
-# matplotlib.use('TkAgg')
-# import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.use('TkAgg')
+import matplotlib.pyplot as plt
 import numpy as np
 from scipy.optimize import curve_fit
 from scipy.optimize import fmin
@@ -220,12 +220,10 @@ class GainBase(object):
 
         print("self.correct_h_gain2", self.base_constant)
         print("self.base_factor", self.base_factor)
-        # plt.subplot(312)
-        # # 4.2363
-        # mlt = np.array(self.h_gain).mean()/np.array(self.h_gain2).mean()
-        #
-        # dvt = (np.array(self.h_gain)-np.array(self.h_gain2)*mlt) / np.array(self.h_gain)
-        # plt.step(range(len(self.correct_h_gain)), dvt)
+        plt.subplot(212)
+        mlt = np.array(self.h_gain).mean()/np.array(self.h_gain2).mean()
+        dvt = (np.array(self.h_gain)-np.array(self.h_gain2)*mlt) / np.array(self.h_gain)
+        plt.step(range(len(self.correct_h_gain)), dvt)
         # plt.subplot(313)
         # plt.hist(dvt, bins=40)
         # print(dvt)
@@ -233,10 +231,10 @@ class GainBase(object):
         # print("-" * 100)
         # print(mlt)
 
-        # plt.subplot(311)
-        # plt.scatter(range(len(self.h_gain)), self.h_gain, s=1, label="GainType1")
-        # plt.scatter(range(len(self.h_gain2)), np.array(self.h_gain2)*mlt, s=1, label="GainType2")
-        # plt.legend()
+        plt.subplot(211)
+        plt.scatter(range(len(self.h_gain)), self.h_gain, s=1, label="GainType1")
+        plt.scatter(range(len(self.h_gain2)), np.array(self.h_gain2)*mlt, s=1, label="GainType2")
+        plt.legend()
 
         # plt.subplot(111)
         # plt.hist(self.h_base, bins=80)
@@ -266,9 +264,9 @@ class GainBase(object):
         # plt.ylim([3.7, 5.8])
 
 
-        # plt.tight_layout()
+        plt.tight_layout()
         # plt.savefig('fig1.png')
-        # plt.show()
+        plt.show()
 
     def save_factor(self, date, i_sipm):
         with open("./outFiles/06_%s_%s.txt" % (date, i_sipm), "w") as f:
