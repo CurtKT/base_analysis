@@ -1,8 +1,8 @@
 #!/workfs/ybj/ketong/anaconda3/bin/python
 import uproot
-# import matplotlib
-# matplotlib.use('TkAgg')
-# import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.use('TkAgg')
+import matplotlib.pyplot as plt
 import numpy as np
 from scipy.optimize import curve_fit
 from scipy.optimize import fmin
@@ -120,7 +120,7 @@ class GainBase(object):
             print(file_path)
             df = uproot.open(file_path)["Status"].pandas.df("*", flatten=False)
             self.tmp_rb_time.extend(list(df["status_readback_Time"]))
-            self.pre_tmp.extend(list(df["PreTemp[%d]" % int(sys.argv[2])]))
+            self.pre_tmp.extend(list(df["PreTemp[0]"]))
         # 时间排序
         for i in range(len(self.tmp_rb_time)):
             for j in range(i + 1, len(self.tmp_rb_time)):
@@ -182,20 +182,7 @@ class GainBase(object):
                     yy3[i], yy3[j] = yy3[j], yy3[i]
                     yy4[i], yy4[j] = yy4[j], yy4[i]
 
-        # plt.plot(temp_list, yy2, c="r", linewidth=1)
-        #
-        # plt.plot(temp_list, yy3, c="black", linewidth=1)
 
-        # plt.plot(temp_list, yy4, c="black", linewidth=1)
-
-
-        #
-        # plt.subplot(312)
-        # plt.scatter(range(len(self.correct_h_gain)), self.gain_tmp, s=1)
-        # plt.xlabel("time[0]")
-        # plt.ylabel("tmp[0]")
-
-        # plt.subplot(313)
         print(self.h_base)
         print(np.array(self.h_base[:10]).mean(), np.array(self.h_base[-10:]).mean())
         # plt.scatter(range(len(self.correct_h_gain)), self.h_base, s=1)
@@ -225,16 +212,9 @@ class GainBase(object):
         # plt.subplot(212)
         mlt = np.array(self.h_gain).mean()/np.array(self.h_gain2).mean()
         mlt2 = None
-        # with open("./outFiles/06_%s_%s.txt" % (sys.argv[1], sys.argv[2]), "r") as f:
-        #     mlt2 = float(f.read().split()[0])
-        # dvt = (np.array(self.h_gain)-np.array(self.h_gain2)*mlt) / np.array(self.h_gain)
-        # plt.step(range(len(self.correct_h_gain)), dvt)
-        # plt.subplot(313)
-        # plt.hist(dvt, bins=40)
-        # print(dvt)
-        # print("-"*100)
-        # print("-" * 100)
-        # print(mlt)
+        with open("./outFiles/06_%s_%s.txt" % (sys.argv[1], sys.argv[2]), "r") as f:
+            mlt2 = float(f.read().split()[0])
+
 
         """'20200106', '20200108', '20200109', '20200110', '20200111',
          '20200114', '20200115', '20200202', '20200203', '20200204', 
@@ -242,21 +222,51 @@ class GainBase(object):
          '20200210', '20200211', '20200303', '20200305', '20200306', 
          '20200307', '20200308', '20200309', '20200310', '20200311', '20200312'"""
 
-        # plt.subplot(211)
-        # plt.title("%s, SiPM=%s" % (sys.argv[1], sys.argv[2]))
-        # plt.scatter(range(len(self.h_gain)), self.h_gain, s=1, label="GainType1")
-        # plt.scatter(range(len(self.h_gain2)), np.array(self.h_gain2)*mlt2, s=1, label="GainType2")
-        # plt.legend()
-        # plt.subplot(212)
-        # gain_span = (np.array(self.h_gain)-np.array(self.h_gain2)*mlt2)/np.array(self.h_gain)
-        # # plt.xlim([-0.4, 0.4])
-        # plt.hist(gain_span, bins=50)
-        # plt.title("Mean:%.2f, RMS:%.2f" % (gain_span.mean(), np.std(np.array(gain_span), ddof=1)))
-        # plt.tight_layout()
+        plt.subplot(211)
+        plt.title("%s, SiPM=%s" % (sys.argv[1], sys.argv[2]))
+        plt.scatter(range(len(self.h_gain)), self.h_gain, s=1, label="GainType1")
+        plt.scatter(range(len(self.h_gain2)), np.array(self.h_gain2)*mlt2, s=1, label="GainType2")
+        plt.legend()
+        plt.subplot(212)
+        gain_span = (np.array(self.h_gain)-np.array(self.h_gain2)*mlt2)/np.array(self.h_gain)
+        # plt.xlim([-0.4, 0.4])
+        plt.hist(gain_span, bins=50)
+        plt.title("Mean:%.2f, RMS:%.2f" % (gain_span.mean(), np.std(np.array(gain_span), ddof=1)))
+        plt.tight_layout()
+
+        # plt.subplot(111)
+        # plt.hist(self.h_base, bins=80)
+        # plt.xlabel("h_base[0]")
+        # plt.ylabel("Count")
+
+
+
+        # popt, pcov = curve_fit(self.fit_func, self.gain_tmp, self.h_gain,)
+        # yy2 = [self.fit_func(i, popt[0], popt[1]) for i in self.gain_tmp]
         #
-        # print("mlt", mlt)
-        # print("mlt2", mlt2)
-        # plt.show()
+        # temp_list = list(self.gain_tmp,)
+        # # 排序
+        # for i in range(len(temp_list)):
+        #     for j in range(i + 1, len(temp_list)):
+        #         if temp_list[i] > temp_list[j]:
+        #             temp_list[i], temp_list[j] = temp_list[j], temp_list[i]
+        #             yy2[i], yy2[j] = yy2[j], yy2[i]
+        #
+        # plt.plot(temp_list, yy2, c="r", linewidth=1)
+
+        #
+        # plt.subplot(212)
+        # plt.scatter(self.gain_tmp, self.correct_h_gain, s=1)
+        # plt.xlabel("pre_tmp[0]")
+        # plt.ylabel("correct_h_gain[0]")
+        # plt.ylim([3.7, 5.8])
+
+
+        # plt.tight_layout()
+        # plt.savefig('fig1.png')
+        print("mlt", mlt)
+        print("mlt2", mlt2)
+        plt.show()
 
     def save_factor(self, date, i_sipm):
         with open("./outFiles/06_%s_%s.txt" % (date, i_sipm), "w") as f:
@@ -270,24 +280,13 @@ class GainBase(object):
     def run(self, date, i_sipm):
         self.get_n_sipm_tmp_fac()
         self.i_sipm = int(i_sipm)
-        # self.get_msg("LED_Calibrate_Factor_20200303_06.root")
-        # self.filter_bad_weather()
-        # self.get_pre_tmp("20200303")
 
-        # self.get_msg("LED_Calibrate_Factor_20200304_06.root")
-        # self.filter_bad_weather()
-        # self.get_pre_tmp("20200304")
-
-        # self.get_msg("LED_Calibrate_Factor_20200305_06.root")
-        # self.get_pre_tmp("20200305")
 
         self.get_msg("LED_Calibrate_Factor_%s_06.root" % date)
-        if self.filter_bad_weather():
-            self.get_pre_tmp("%s" % date)
-            self.tmp_offset(int(i_sipm))
-            self.show_graph()
-        self.save_factor(date, i_sipm)
-
+        # if self.filter_bad_weather():
+        self.get_pre_tmp("%s" % date)
+        self.tmp_offset(int(i_sipm))
+        self.show_graph()
 
 if __name__ == "__main__":
     gb = GainBase()

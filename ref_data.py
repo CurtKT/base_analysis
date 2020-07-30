@@ -54,7 +54,7 @@ for file in files_name:
 ['20200106', '20200108', '20200109', '20200110', '20200111', '20200114', '20200115', '20200303', '20200305', '20200306', '20200307', '20200308', '20200309', '20200310', '20200311']
 """
 def show_all_sipm():
-    temp_index = str_time_list.index("20200308")
+    temp_index = str_time_list.index("20200209")
     constant_list = [np.array([constant_dict[i*32+j][temp_index] for j in range(32)]) for i in range(32)]
     factor_list = [np.array([factor_dict[i*32+j][temp_index] for j in range(32)]) for i in range(32)]
     resolving_list = [np.array([resolving_dict[i*32+j][temp_index] for j in range(32)]) for i in range(32)]
@@ -113,15 +113,19 @@ def show_all_sipm():
     constant_array = np.array(constant_array)
     factor_array = np.array(factor_array)
 
-    # plt.imshow(factor_list)
-    # plt.colorbar()
-    # plt.show()
+    plt.subplot(121)
+    plt.imshow(factor_list)
+    plt.colorbar()
+    plt.subplot(122)
+    plt.imshow(constant_list)
+    plt.colorbar()
+    plt.show()
     print("constant", np.nanstd(np.array(constant_array), ddof=1)/np.nanmean(constant_array))
     print("factor", np.nanstd(np.array(factor_array), ddof=1)/np.nanmean(factor_array))
-    plt.subplot(121)
-    plt.hist(constant_array, bins=40)
-    plt.subplot(122)
-    plt.hist(factor_array, bins=40)
+    # plt.subplot(121)
+    # plt.hist(constant_array, bins=40)
+    # plt.subplot(122)
+    # plt.hist(factor_array, bins=40)
     plt.show()
 
 
@@ -144,8 +148,8 @@ def show_one_sipm(n_sipm):
     # plt.legend()
     plt.show()
 
-# show_all_sipm()
-show_one_sipm([0,15, 100, 527, 803, 997, 1007, 1022])
+show_all_sipm()
+# show_one_sipm([0,15, 100, 527, 803, 997, 1007, 1022])
 
 
 

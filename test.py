@@ -1,32 +1,47 @@
-import numpy as np
 import matplotlib.pyplot as plt
-
-# Fixing random state for reproducibility
-np.random.seed(19680801)
-
-n = 100000
-x = np.random.standard_normal(n)
-y = 2.0 + 3.0 * x + 4.0 * np.random.standard_normal(n)
-xmin = x.min()
-xmax = x.max()
-ymin = y.min()
-ymax = y.max()
-
-fig, axs = plt.subplots(ncols=1, sharey=True, figsize=(5, 4))
-# fig.subplots_adjust(hspace=0.5, left=0.07, right=0.93)
-ax = axs
-hb = ax.hexbin(x, y, C=range(50), gridsize=50)
-ax.set(xlim=(xmin, xmax), ylim=(ymin, ymax))
-ax.set_title("Hexagon binning")
-cb = fig.colorbar(hb)
-cb.set_label('counts')
+import numpy as np
 
 
-# ax = axs[1]
-# hb = ax.hexbin(x, y, gridsize=50, bins='log')
-# ax.set(xlim=(xmin, xmax), ylim=(ymin, ymax))
-# ax.set_title("With a log color scale")
-# cb = fig.colorbar(hb, ax=ax)
-# cb.set_label('log10(N)')
+# plt.style.use("ggplot")
+plt.style.use('bmh')
+
+# 数据
+mu = 100  # 均值
+sigma = 20  # 方差
+# 2000个数据
+x = mu + sigma*np.random.randn(2000)
+x2 = mu+50 + sigma*1.2*np.random.randn(2000)
+
+
+# 画图 bins:条形的个数， normed：是否标准化
+plt.hist((x, x2), bins=30, histtype="stepfilled", alpha=0.7, label=("1", "2"))
+
+plt.legend()
+
+# 展示
 plt.show()
 
+
+# import numpy as np
+# import matplotlib.pyplot as plt
+#
+#
+# # Fixing random state for reproducibility
+# np.random.seed(19680801)
+#
+# plt.style.use('bmh')
+#
+#
+# def plot_beta_hist(ax, a, b):
+#     ax.hist(np.random.beta(a, b, size=10000),
+#             histtype="stepfilled", bins=25, alpha=0.8, density=True)
+#
+#
+# fig, ax = plt.subplots()
+# plot_beta_hist(ax, 10, 10)
+# plot_beta_hist(ax, 4, 12)
+# plot_beta_hist(ax, 50, 12)
+# plot_beta_hist(ax, 6, 55)
+# ax.set_title("'bmh' style sheet")
+#
+# plt.show()

@@ -1,8 +1,6 @@
 import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib as mpl
 
+a = np.arange(1000)
+print(a[a<500])
 
-for i in range(-10):
-    print(i)
 
